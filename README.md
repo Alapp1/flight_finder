@@ -1,4 +1,3 @@
-# flight_finder
 # Project Overview
 
 This project is a Python script that utilizes Windscribe VPN and the Selenium framework to scrape Expedia for the cheapest flights throughout all of Windscribe's locations.
@@ -24,6 +23,7 @@ windscribe locations | awk '{print $4}' | sed 1d >> labels.txt
 - **Implementation Required:**
   - Click the nonstop checkbox.
   - Retrieve the final price of the cheapest flight.
+  - Output list of flight costs, specifying the minimum
 
 - **Manual Steps:**
   - Captchas must still be completed manually.
