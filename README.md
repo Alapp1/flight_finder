@@ -1,7 +1,7 @@
 # flight_finder
 # Project Overview
 
-This project is a Python script that utilizes Windscribe VPN and the Selenium framework to scrape Expedia for the cheapest flights within a specified region.
+This project is a Python script that utilizes Windscribe VPN and the Selenium framework to scrape Expedia for the cheapest flights throughout all of Windscribe's locations.
 
 ## User Interaction
 
