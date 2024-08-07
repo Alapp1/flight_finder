@@ -14,6 +14,8 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException,
 import time
 import windscribe
 from twocaptcha import TwoCaptcha
+from dotenv import load_dotenv
+import os
 
 def get_labels(file_path):
     with open(file_path, 'r') as file:
@@ -28,7 +30,11 @@ def connect_to_server(label):
         print("Error connecting to VPN")
         print(windscribe.status())
 
-def solve_captcha(driver, api_key):
+# Not fully implemented
+# Expedia's website uses captcha methods that cannot
+#  be solved by this function
+
+def automate_captcha(driver, api_key):
     solver = TwoCaptcha(api_key)
     
     try:
@@ -48,6 +54,9 @@ def solve_captcha(driver, api_key):
         print(f"Error solving CAPTCHA: {e}")
         return False
 
+# Not fully implemented
+# Expedia's website uses captcha methods that cannot
+# be solved by this function
 def check_for_captcha(driver):
     try:
         
@@ -102,7 +111,8 @@ def main():
         'ReturnDate': return_date
     }
     
-    api_key = 'a8516eb96621f7008c4abc827b0e00f8'  # Replace with your actual 2Captcha API key
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
     
     for label in labels:
         connect_to_server(label)
@@ -116,7 +126,6 @@ def find_cheapest_flights(flight_info, api_key):
     options.add_argument('--disable-dev-shm-usage')
 
     driver = webdriver.Chrome()
-    # driver = webdriver.Chrome('/home/mule/Downloads/chromedriver-linux64', chrome_options=options)
 
     leaving_from = flight_info['Departure']
     going_to = flight_info['Arrival']
@@ -131,7 +140,7 @@ def find_cheapest_flights(flight_info, api_key):
 
     #if check_for_captcha(driver):
         #time.sleep(3)
-        #solve_captcha(driver, api_key)
+        #automate_captcha(driver, api_key)
     
     # Complete Leaving From Portion
     try:
@@ -239,7 +248,7 @@ def find_cheapest_flights(flight_info, api_key):
         time.sleep(5) 
         manually_check_captcha()
         # Wait for CAPTCHA and solve it using 2Captcha
-        #captcha_solved = solve_captcha(driver, api_key)
+        #captcha_solved = automate_captcha(driver, api_key)
         #if not captcha_solved:
             #driver.quit()
             #return "Error solving CAPTCHA"
