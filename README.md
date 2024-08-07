@@ -2,7 +2,11 @@
 
 This project is a Python script that utilizes Windscribe VPN and the Selenium framework to scrape Expedia for the cheapest flights throughout all of Windscribe's locations.
 
-## User Interaction
+## Usage
+You must first start windscribe (if not already running) 
+``` bash
+sudo /etc/init.d/windscribe-cli start
+```
 
 The script prompts the user to enter:
 
@@ -18,6 +22,8 @@ To extract the server ID list from the Windscribe locations list, the following 
 ```bash
 windscribe locations | awk '{print $4}' | sed 1d >> labels.txt
 ```
+
+
 ## Current Status
 
 - **Implementation Required:**
