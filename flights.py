@@ -33,66 +33,22 @@ def connect_to_server(label):
 # Not fully implemented
 # Expedia's website uses captcha methods that cannot
 #  be solved by this function
-
 def automate_captcha(driver, api_key):
     solver = TwoCaptcha(api_key)
     
     try:
-        site_key = driver.find_element(By.CSS_SELECTOR, 'div.g-recaptcha').get_attribute('data-sitekey')
-        url = driver.current_url
-        
-        result = solver.recaptcha(sitekey=site_key, url=url)
-        
-        code = result['code']
-        
-        driver.execute_script(f"document.getElementById('g-recaptcha-response').innerHTML = '{code}';")
-        driver.execute_script("document.getElementById('captcha-form').submit();")
-        print("CAPTCHA solved")
-        
+        result = solver.funcaptcha(sitekey='33C384C0-7DE5-4243-80DB-2C5E35802C15', 
+                                   url='https://www.expedia.com/Flights',
+                                   surl='surl=https%3A%2F%2Fexpedia-api.arkoselabs.com')
         return True
     except Exception as e:
         print(f"Error solving CAPTCHA: {e}")
         return False
 
-# Not fully implemented
-# Expedia's website uses captcha methods that cannot
-# be solved by this function
-def check_for_captcha(driver):
-    try:
-        
-
-        # Define potential CAPTCHA indicators
-        captcha_indicators = [
-        "iframe[src*='recaptcha']",
-        "div.g-recaptcha",
-        "div.rc-anchor",
-        "div#captcha",
-        "input#captcha",
-        "span#captcha"
-        ]
-
-        captcha_found = False
-
-        # Check for CAPTCHA elements
-        for selector in captcha_indicators:
-            try:
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-                )
-                print(f"CAPTCHA detected using selector: {selector}")
-                captcha_found = True
-                break
-            except TimeoutException:
-                continue
-
-    except (NoSuchElementException, TimeoutException) as e:
-        print(f"Error checking for CAPTCHA: {e}")
-
-    return captcha_found
-
 def manually_check_captcha():
     print("Please solve the CAPTCHA if present, then press Enter to continue...")
-    input()
+    x = input()
+    return x
 
 def main():
     labels = get_labels('labels.txt')
@@ -134,13 +90,10 @@ def find_cheapest_flights(flight_info, api_key):
     
     # Go to Expedia
     driver.get("https://www.expedia.com/Flights")
-    time.sleep(2)
+    time.sleep(5)
     
-    manually_check_captcha()
-
-    #if check_for_captcha(driver):
-        #time.sleep(3)
-        #automate_captcha(driver, api_key)
+    
+    automate_captcha(driver, api_key)
     
     # Complete Leaving From Portion
     try:
@@ -246,7 +199,10 @@ def find_cheapest_flights(flight_info, api_key):
         search_button.click()
         print("Clicked Search Button")
         time.sleep(5) 
-        manually_check_captcha()
+        x = manually_check_captcha()
+        if x == 'f':
+            automate_captcha(driver, api_key)
+            
         # Wait for CAPTCHA and solve it using 2Captcha
         #captcha_solved = automate_captcha(driver, api_key)
         #if not captcha_solved:
