@@ -41,7 +41,7 @@ This script uses the Amadeus Flight Offers Search API to fetch and display the c
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/flight-finder.git
+   git clone https://github.com/Alapp1/flight-finder.git
    cd flight-finder
 2. Install Dependencies:
    ```bash
