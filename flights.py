@@ -17,11 +17,18 @@ from twocaptcha import TwoCaptcha
 from dotenv import load_dotenv
 import os
 
+"""
+This function is used to get the labels used in connecting to the windscribe vpn
+"""
 def get_labels(file_path):
     with open(file_path, 'r') as file:
         labels = [line.strip() for line in file]
     return labels
 
+"""
+Connects to the windscribe vpn using api call
+Prints status of vpn if cannot connect
+"""
 def connect_to_server(label):
     try:
         windscribe.connect(label)
@@ -30,12 +37,13 @@ def connect_to_server(label):
         print("Error connecting to VPN")
         print(windscribe.status())
 
-# Not fully implemented
-# Expedia's website uses captcha methods that cannot
-#  be solved by this function
+"""
+Not fully implemented
+Expedia's website uses captcha methods that cannot
+    be solved by this function yet
+"""
 def automate_captcha(driver, api_key):
     solver = TwoCaptcha(api_key)
-    
     try:
         result = solver.funcaptcha(sitekey='33C384C0-7DE5-4243-80DB-2C5E35802C15', 
                                    url='https://www.expedia.com/Flights',
@@ -45,12 +53,20 @@ def automate_captcha(driver, api_key):
         print(f"Error solving CAPTCHA: {e}")
         return False
 
+"""
+Waits for user input to continue
+"""
 def manually_check_captcha():
     print("Please solve the CAPTCHA if present, then press Enter to continue...")
     x = input()
     return x
 
+"""
+Contains all functionality for taking in user input, loading
+up the api key, and calling the function to find the cheapest flight
+"""
 def main():
+    # List of vpn locations to cycle through
     labels = get_labels('labels.txt')
 
     # Get user input
@@ -58,7 +74,7 @@ def main():
     arrival_city = input("Enter the arrival city code (e.g., LAX): ")
     departure_date = input("Enter the departure date (e.g., Aug 5, 2024): ")
     return_date = input("Enter the return date (e.g., Aug 15, 2024): ")
-
+    
     departure_flight_inputs = {
             
         'Departure': departure_city,
@@ -67,15 +83,32 @@ def main():
         'ReturnDate': return_date
     }
     
+    # load captcha api
     load_dotenv()
     api_key = os.getenv("API_KEY")
     
+
+    #For each vpn location find the cheapest flight
+    flights = {}
     for label in labels:
         connect_to_server(label)
         cheapest_flight = find_cheapest_flights(departure_flight_inputs, api_key)
-        print("Cheapest Flight: ", cheapest_flight)
+        print(f"Cheapest Flight in {label}: {cheapest_flight}.", )
+        flights[label] = cheapest_flight
 
+
+    min_key = min(flights, key=flights.get)
+    min_value = flights[min_key]
+
+    print(f"Location with the cheapest flight: {min_key}, Price: {min_value}")
+
+"""
+Function responsible for scraping the website for its cheapest
+flight, based on the provided dates and locations
+"""
 def find_cheapest_flights(flight_info, api_key):
+
+    # First setup chromedriver
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
@@ -92,8 +125,9 @@ def find_cheapest_flights(flight_info, api_key):
     driver.get("https://www.expedia.com/Flights")
     time.sleep(5)
     
-    
-    automate_captcha(driver, api_key)
+    # Deal with the captcha somehow
+    manually_check_captcha();
+    #automate_captcha(driver, api_key)
     
     # Complete Leaving From Portion
     try:
@@ -143,7 +177,7 @@ def find_cheapest_flights(flight_info, api_key):
     
     time.sleep(2)
     
-    # Complete Departure Date Portion
+     # Complete Departure Date Portion
     try:
         date_selector_button = 'button[aria-label*="Dates"]'
         date_button = WebDriverWait(driver, 10).until(
@@ -189,7 +223,106 @@ def find_cheapest_flights(flight_info, api_key):
         print(f"Error interacting with Date Selector: {e}")
         driver.quit()
         return "Error interacting with Date Selector"
-    
+  # Complete Departure Date Portion
+    try:
+        date_selector_button = 'button[data-stid="open-date-picker"]'
+        date_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, date_selector_button))
+        )
+        date_button.click()
+        print("Clicked Date Selector button")
+
+        # Select Departure Date
+        departure_date_selector = f'button[aria-label^="{departure_date}"]'
+        while True:
+            try:
+                departure_date_element = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, departure_date_selector))
+                )
+                departure_date_element.click()
+                print(f"Selected departure date: {departure_date}")
+                break
+            except TimeoutException:
+                next_month_selector = 'button[data-stid="date-picker-paging"][aria-label="Next month"]'
+                driver.find_element(By.CSS_SELECTOR, next_month_selector).click()
+                time.sleep(1)
+        
+        # Select Return Date
+        return_date_selector = f'button[aria-label^="{return_date}"]'
+        while True:
+            try:
+                return_date_element = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, return_date_selector))
+                )
+                return_date_element.click()
+                print(f"Selected return date: {return_date}")
+                break
+            except TimeoutException:
+                next_month_selector = 'button[data-stid="date-picker-paging"][aria-label="Next month"]'
+                driver.find_element(By.CSS_SELECTOR, next_month_selector).click()
+                time.sleep(1)
+
+        apply_date_selector = 'button[data-stid="apply-date-picker"]'
+        apply_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, apply_date_selector))
+        )
+        apply_button.click()
+        print("Applied dates")
+        
+    except (TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
+        print(f"Error interacting with Date Selector: {e}")
+        driver.quit()
+        return "Error interacting with Date Selector" # Complete Departure Date Portion
+    try:
+        date_selector_button = 'button[data-stid="open-date-picker"]'
+        date_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, date_selector_button))
+        )
+        date_button.click()
+        print("Clicked Date Selector button")
+    except (TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
+        printf("Error interacting with date selector: {e}")
+        driver.quit()
+        return "error interacting with date selector"
+
+    # Select Departure Date
+    departure_date_selector = f'button[aria-label^="{departure_date}"]'
+    while True:
+        try:
+            departure_date_element = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, departure_date_selector))
+            )
+            departure_date_element.click()
+            print(f"Selected departure date: {departure_date}")
+            break
+        except TimeoutException:
+            next_month_selector = 'button[data-stid="date-picker-paging"][aria-label="Next month"]'
+            driver.find_element(By.CSS_SELECTOR, next_month_selector).click()
+            time.sleep(1)
+        
+        # Select Return Date
+    return_date_selector = f'button[aria-label^="{return_date}"]'
+    while True:
+        try:
+            return_date_element = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, return_date_selector))
+            )
+            return_date_element.click()
+            print(f"Selected return date: {return_date}")
+            break
+        except TimeoutException:
+            next_month_selector = 'button[data-stid="date-picker-paging"][aria-label="Next month"]'
+            driver.find_element(By.CSS_SELECTOR, next_month_selector).click()
+            time.sleep(1)
+
+        apply_date_selector = 'button[data-stid="apply-date-picker"]'
+        apply_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, apply_date_selector))
+        )
+        apply_button.click()
+        print("Applied dates")
+        
+   
     # Click Search
     try:
         search_button_selector = 'button#search_button'
@@ -252,6 +385,27 @@ def find_cheapest_flights(flight_info, api_key):
 
     except (TimeoutException, NoSuchElementException, ElementNotInteractableException) as e:
         print(f"Error finding or clicking the 'Nonstop' checkbox: {e}") 
+
+    # Wait until the results are loaded after filtering
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-test-id='listings']"))
+    )
+
+    # Find and click the button or link for the lowest price
+    try:
+        lowest_price_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "css-selector-for-lowest-price"))
+        )
+        lowest_price_button.click()
+
+        # Extract the lowest price (adjust the selector as necessary)
+        price_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "css-selector-for-price"))
+        )
+        lowest_price = price_element.text
+        return lowest_price
+    except Exception as e:
+        print(f"Error occurred: {e}")
 
 if __name__ == "__main__":
     main()
