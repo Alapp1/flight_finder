@@ -51,7 +51,7 @@ def display_flights(flights):
         print("-" * 150)
 
 # Main flight search function
-def find_cheapest_flights(origin, destination, rough_departure_date, rough_return_date, date_range):
+def find_cheapest_flights(origin, destination, rough_departure_date, rough_return_date, date_range, num_flights):
     """
     Finds the cheapest flights within a given date range.
     """
@@ -64,7 +64,7 @@ def find_cheapest_flights(origin, destination, rough_departure_date, rough_retur
             returnDate=rough_return_date,
             adults=1,
             currencyCode="USD",
-            max=5  # Get the top 5 cheapest flights
+            max=num_flights  
         )
 
         # Parse and display results
@@ -80,17 +80,19 @@ def find_cheapest_flights(origin, destination, rough_departure_date, rough_retur
         print(f"An error occurred: {error}")
         return None
 
-# Main program
 def main():
+    # Collect user input
     print("Welcome to the Flight Finder!")
     origin = input("Enter the departure city code (e.g., NYC): ").strip()
     destination = input("Enter the arrival city code (e.g., MAD): ").strip()
     rough_departure_date = input("Enter the approximate departure date (YYYY-MM-DD): ").strip()
     rough_return_date = input("Enter the approximate return date (YYYY-MM-DD): ").strip()
     date_range = int(input("Enter the range of days to search around the dates (e.g., 3): ").strip())
-
+    num_flights = input("Enter the max number of flights you wish to view ").strip()
+    
+    # Calculate cheapest flights 
     print(f"Searching for the cheapest flights from {origin} to {destination}...")
-    flights = find_cheapest_flights(origin, destination, rough_departure_date, rough_return_date, date_range)
+    flights = find_cheapest_flights(origin, destination, rough_departure_date, rough_return_date, date_range, num_flights);
 
     if flights:
         print("\nDone! Cheapest flights are displayed above.")
